@@ -4,6 +4,10 @@ import gulpLoadPlugins from 'gulp-load-plugins';
 import browserSync from 'browser-sync';
 import del from 'del';
 import {stream as wiredep} from 'wiredep';
+import browserify from 'browserify';
+import babelify from 'babelify';
+import source from 'vinyl-source-stream';
+import buffer from 'vinyl-buffer';
 
 const $ = gulpLoadPlugins();
 const reload = browserSync.reload;
@@ -18,13 +22,25 @@ gulp.task('styles', () => {
 });
 
 gulp.task('scripts', () => {
-  return gulp.src('app/scripts/**/*.js')
-    .pipe($.plumber())
-    .pipe($.sourcemaps.init())
-    .pipe($.babel())
+  return browserify('app/scripts/main.js', { debug: true })
+    .transform(babelify, { presets: ["es2015"] })
+    .bundle()
+    .pipe(source('app.js'))
+    .pipe(buffer())
+    .pipe($.sourcemaps.init({ loadMaps: true }))
+    // capture sourcemaps from transforms
+    //.pipe($.uglify())
     .pipe($.sourcemaps.write('.'))
     .pipe(gulp.dest('.tmp/scripts'))
     .pipe(reload({stream: true}));
+  
+  // return gulp.src('app/scripts/**/*.js')
+  //   .pipe($.plumber())
+  //   .pipe($.sourcemaps.init())
+  //   .pipe($.babel())
+  //   .pipe($.sourcemaps.write('.'))
+  //   .pipe(gulp.dest('.tmp/scripts'))
+  //   .pipe(reload({stream: true}));
 });
 
 function lint(files, options) {
@@ -88,6 +104,9 @@ gulp.task('serve', ['styles', 'scripts', 'fonts'], () => {
   browserSync({
     notify: false,
     port: 8081,
+    ui: {
+      port: 8082
+    },
     server: {
       baseDir: ['.tmp', 'app'],
       routes: {
@@ -112,6 +131,9 @@ gulp.task('serve:dist', () => {
   browserSync({
     notify: false,
     port: 8081,
+    ui: {
+      port: 8082
+    },
     server: {
       baseDir: ['dist']
     }
