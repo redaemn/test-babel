@@ -4,10 +4,6 @@ import gulpLoadPlugins from 'gulp-load-plugins';
 import browserSync from 'browser-sync';
 import del from 'del';
 import {stream as wiredep} from 'wiredep';
-import browserify from 'browserify';
-import babelify from 'babelify';
-import source from 'vinyl-source-stream';
-import buffer from 'vinyl-buffer';
 
 const $ = gulpLoadPlugins();
 const reload = browserSync.reload;
@@ -22,25 +18,15 @@ gulp.task('styles', () => {
 });
 
 gulp.task('scripts', () => {
-  return browserify('app/scripts/main.js', { debug: true })
-    .transform(babelify, { presets: ["es2015"] })
-    .bundle()
-    .pipe(source('app.js'))
-    .pipe(buffer())
-    .pipe($.sourcemaps.init({ loadMaps: true }))
-    // capture sourcemaps from transforms
-    //.pipe($.uglify())
+  return gulp.src('app/scripts/**/*.js')
+    .pipe($.plumber())
+    .pipe($.sourcemaps.init())
+    .pipe($.babel({
+      "plugins": ["transform-es2015-modules-umd"]
+    }))
     .pipe($.sourcemaps.write('.'))
     .pipe(gulp.dest('.tmp/scripts'))
     .pipe(reload({stream: true}));
-  
-  // return gulp.src('app/scripts/**/*.js')
-  //   .pipe($.plumber())
-  //   .pipe($.sourcemaps.init())
-  //   .pipe($.babel())
-  //   .pipe($.sourcemaps.write('.'))
-  //   .pipe(gulp.dest('.tmp/scripts'))
-  //   .pipe(reload({stream: true}));
 });
 
 function lint(files, options) {
@@ -52,6 +38,7 @@ function lint(files, options) {
       .pipe($.if(!browserSync.active, $.eslint.failAfterError()));
   };
 }
+
 const testLintOptions = {
   env: {
     mocha: true
@@ -122,7 +109,7 @@ gulp.task('serve', ['styles', 'scripts', 'fonts'], () => {
   ]).on('change', reload);
 
   gulp.watch('app/styles/**/*.css', ['styles']);
-  gulp.watch('app/scripts/**/*.js', ['scripts']);
+  gulp.watch('app/scripts/**/*.js', ['lint', 'scripts']);
   gulp.watch('app/fonts/**/*', ['fonts']);
   gulp.watch('bower.json', ['wiredep', 'fonts']);
 });

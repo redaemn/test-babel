@@ -1,5 +1,5 @@
 
-import lib from "./lib";
+import lib from 'lib';
 //let lib = {};
 
 const MY_PRIV = 42;

@@ -1,10 +1,10 @@
-var priv_var = 'hello';
+var privVar = 'hello';
 
 export default {
   getVar: () => {
-      return priv_var;
+      return privVar;
   },
   setVar: () => {
-      priv_var = "world";
+      privVar = 'world';
   }
 };
